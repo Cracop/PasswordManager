@@ -28,24 +28,16 @@ const btnAcceder = document.getElementById("Acceder");
 
 //----------------------------------------------------------------------------
 //Trato de leer el archivo que contiene las contraseñas, sino existe lo creo
-try{
-  rawdata = fs.readFileSync(pth, "");
-  datos = JSON.parse(rawdata);
-  hasPreviousPasswd=true;
-}catch{
-  console.log("Existe el archivo pero está vacio");
-  hasPreviousPasswd=false;
-  fs.writeFileSync(pth, "")
-};
-//Inicio con Inputs Bloqueados AKA Menú Principal
 
-bloquearInputs();
-ModificarMasterInput("", "Escribe tu Contraseña Maestra", false, "password")
+//Se deja---------------------------------------------------------------------
 //Inicialmente solo puedo cambiar la contraseña maestra o agregar una nueva cuenta,
 //para acceder a una cuenta en especifico la selecciono en la tabla
+bloquearInputs(); //se deja, es el menu principal
+ModificarMasterInput("", "Escribe tu Contraseña Maestra", false, "password")
 DeshabilitarBotones(true, true, true, true, true, true, true, false);
 //------------------------------------------------------------------------------
-//Funcion que voy a llamar cada vez haga una modificación
+
+//le pasamos la carga descifrarJSON() y cifrarJSON(), ver como modificar esto sin joderlo--------------------
 function UpdateDatos(){
   datos = JSON.stringify(datos);
   fs.writeFileSync(pth, datos)
@@ -69,18 +61,35 @@ function UpdateDatos(){
 }
   table.replaceData(datos);
 }
+//----------------------------------------------------------------------------
 
-
-//create Tabulator on DOM element with id "tabla-datos"
-
-
+//Hacer modificaciones---------------------------------------
 function cambiarContraseñaMaestra(){   
   activarMenu("CambiarContraseña")
+  //key = nueva key que leo
+  //cifroJSON(key) sobreescribo el archivo
+  //descrifrar(key) leo el archivo y datos=lo que regrese python
 }
+//------------------------------------------------------------
 
+//Hacer modificaciones (generar llave, cifrar y descifrar-------------------------------------------
 function acceder(){
+  //checo si key es nulo, si es nulo acabo de prender la aplicación
+  //si no es nulo es que le piqué en cambiar masterpasswd y descifro cifro de nuevo el archivo 
   if (masterInput.value!==""){
     DeshabilitarBotones(false, !hasPreviousPasswd, true, true, true, true, true, true);
+    
+    //key = hashear(document.getElementById("ContraseñaMaestra")) llamo a python
+    //datos=descifrarJSON(key)
+
+    try{
+      rawdata = fs.readFileSync(pth, "");
+      datos = JSON.parse(rawdata);
+      hasPreviousPasswd=true;
+    }catch{
+      hasPreviousPasswd=false;
+      fs.writeFileSync(pth, "")
+    };
 
       table = new Tabulator("#tabla-datos", {
       height:380, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
@@ -102,7 +111,12 @@ function acceder(){
       },
     });
   }
+
+  
 }
+//-------------------------------------------------------------
+
+//Toca hacer modificaciones (ver que onda con el update, cifrar y descifrar---------------------------------
 function guardarDatos(){
   var update;
   let sitio, cuenta, passwd;
@@ -117,10 +131,12 @@ function guardarDatos(){
     if (cuenta!=="" && sitio!=="" && passwd!==""){
       update = {Sitio: sitio, Cuenta: cuenta, Contraseña: passwd}
       console.log(changedPassword, passwd);
+
       if (sitioInput.placeholder==="cuentaYaExiste" && changedPassword!==passwd){
         const index = datos.findIndex(x => ((x.Sitio === sitio && x.Cuenta === cuenta))); 
         if (index !== undefined) datos.splice(index, 1);
         datos.push(update);
+        //CifrarJSON(key)
        }else{
         if(changedPassword!==passwd) datos.push(update);
        }
@@ -132,12 +148,17 @@ function guardarDatos(){
   UpdateDatos();
   changedPassword="";
 }
+//------------------------------------------------------------------
 
-function hashear(clave){
+//Modificar------------------------------------------------
+function hashear(contraseñaMaestra){
   let hash;
   return hash;
+  //le paso a python eso
 }
+//-------------------------------------------------------
 
+//Esto ya esta--------------------------------------------
 function generarContraseña(){
   //Opciones para utilizar el python-shell
   let options = {
@@ -157,7 +178,9 @@ function generarContraseña(){
     passwdInput.value=results;
   });
 }
+//-------------------------------------------------------------------------
 
+//Esto ya está-----------------------------------------------------
 function descrifrarContraseña(){
   //Leo la contraseña y la descifro (python)
   let passwd=passwdInput.value;
@@ -167,9 +190,10 @@ function descrifrarContraseña(){
     ModificarPasswdInput(passwd, "", true, "text");
     DeshabilitarBotones(true, true, true, true, true, true, false, true);
   }
-  
 }
+//--------------------------------------------------------------------
 
+//Esto ya está-----------------------------------------------------------
 function eliminarCuenta(){
   //Uso js para eliminar del json
   let sitio;
@@ -193,7 +217,29 @@ function modificar(){
   ModificarPasswdInput(passwdInput.value, "", false, "text");
   DeshabilitarBotones(true, true, true, true, false, false, false, true);
 }
+//-------------------------------------------------------------------------
 
+function cifrarJSON(key){
+  //Python
+  //Checar como pasarle datos (la variable a python)
+  //Le paso datos (la variable) y se encarga de cifrar y sobreescribir el archivo, ya asumimos que existe 
+}
+
+function descifrarJSON(key){
+  //Python
+  //Este lo llamo cuando la llave y se encarga de leer el archivo si existe o crearlo si no existe
+  //me regresa el arreglo de dicciones (objetos json) si no ya tengo datos (arreglo vacio) y puedo hacer lo que sea
+  //checar como recibo datos arreglos de python
+
+}
+
+function cambiarPasswdMaestra(){
+  //pido la nueva nueva llave, solo es cambiar la variable key y volver a llamar cifrarJSON() y descifrarJSON()
+}
+
+//--------------------------------------------------
+
+//Esto ya esta--------------------------------------------------------------------------------------------------
 //Esta función bloquea los inputs, se llama después de cada cambio, 
 //es una manera de "regresar" al menu principal
 function bloquearInputs(){
@@ -237,18 +283,6 @@ function activarMenu(opcion){
   }
 }
 
-function pedirPasswdMaestra(){
-
-}
-
-function descrifrar(mensaje, key){
-
-}
-
-function cifrar(mensaje, key){
-
-}
-
 //Estas tres funciones modifican los inputs de acuerdo a los parametros que les pase
 //valor (string): Que ya van a tener escrito
 //placeholder (string): La "guía" que van a mostrar
@@ -289,3 +323,5 @@ function DeshabilitarBotones(agregar, cambiar, descifrar, eliminar, generar, gua
   btnModificar.disabled=modificar;
   btnAcceder.disabled=acceder;
 }
+
+//------------------------------------------------------------
