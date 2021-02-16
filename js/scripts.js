@@ -79,7 +79,7 @@ function acceder(){
   if (masterInput.value!==""){
     DeshabilitarBotones(false, !hasPreviousPasswd, true, true, true, true, true, true);
     
-    key = hashear(masterInput.value) //llamo a python
+    hashear(masterInput.value) //llamo a python
     ModificarMasterInput("","",true, "password");
     //datos=descifrarJSON(key)
 
@@ -162,7 +162,6 @@ function hashear(contraseñaMaestra){
     scriptPath: path.join(__dirname, '../py'),//'path/to/my/scripts',
     args: [contraseñaMaestra]
     };
-
     PythonShell.run('generateKey.py', options, function (err, results) {
       if (err) throw err;
       // results is an array consisting of messages collected during execution

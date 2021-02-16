@@ -26,5 +26,7 @@ def generateKey(pswd):
 
 
 
-print(generateKey(sys.argv[0]).decode("utf-8"))
+print(generateKey(sys.argv[1]).decode("utf-8"))
 sys.stdout.flush()
+
+
