@@ -79,7 +79,8 @@ function acceder(){
   if (masterInput.value!==""){
     DeshabilitarBotones(false, !hasPreviousPasswd, true, true, true, true, true, true);
     
-    //key = hashear(document.getElementById("ContraseñaMaestra")) llamo a python
+    key = hashear(masterInput.value) //llamo a python
+    ModificarMasterInput("","",true, "password");
     //datos=descifrarJSON(key)
 
     try{
@@ -152,9 +153,21 @@ function guardarDatos(){
 
 //Modificar------------------------------------------------
 function hashear(contraseñaMaestra){
-  let hash;
-  return hash;
   //le paso a python eso
+  //Opciones para utilizar el python-shell
+  let options = {
+    mode: 'text',
+    pythonPath: path.join(__dirname, '../py/env/Scripts/python.exe'),//'path/to/python',
+    pythonOptions: ['-u'], // get print results in real-time
+    scriptPath: path.join(__dirname, '../py'),//'path/to/my/scripts',
+    args: [contraseñaMaestra]
+    };
+
+    PythonShell.run('generateKey.py', options, function (err, results) {
+      if (err) throw err;
+      // results is an array consisting of messages collected during execution
+      key=results[0];
+    });  
 }
 //-------------------------------------------------------
 

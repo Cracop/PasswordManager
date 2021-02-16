@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Feb 15 15:20:14 2021
-Generador Contraseña Random
-@author: rodri
-"""
-#https://pypi.org/project/random-password-generator/ otra opcion
 #%%Imports
 import string
 import random
