@@ -18,6 +18,7 @@ def encryptionJSON(key, lista):
     input_file = "db.json"
     
     if len(lista)==0:
+        os.remove("db.encrypted")
         output_file = 'db.json'
         with open(output_file, 'wb') as f:#Lo creo vacio
             pass
@@ -38,6 +39,6 @@ def encryptionJSON(key, lista):
 key = sys.argv[1]
 lst = json.loads(sys.argv[2])
 #lst = sys.argv[2]
-print(lst)
+
 encryptionJSON(key, lst)
 sys.stdout.flush()
