@@ -54,7 +54,7 @@ async function acceder() {
       console.log("No hay llave anterior")
       document.getElementById("Aviso").innerHTML = "";
     } catch {
-      document.getElementById("Aviso").innerHTML = "Contraseña incorrecta";
+      document.getElementById("Aviso").innerHTML = "Contraseña Incorrecta";
     }
   } else {
     await hashear(masterInput.value);
@@ -62,7 +62,7 @@ async function acceder() {
     try {
       crearTabla()
       document.getElementById("Aviso").style.color = "greenyellow"
-      document.getElementById("Aviso").innerHTML = "Contraseña cambiada exitosamente";
+      document.getElementById("Aviso").innerHTML = "Contraseña Exitosa";
       console.log("Ya hay una llave")
       DeshabilitarBotones(false, false, true, true, true, true, true, true);
       ModificarMasterInput("", "", true, "password");

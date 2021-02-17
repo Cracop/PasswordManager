@@ -25,10 +25,10 @@ function createWindow() {
   //Creo un menu
   var menu = Menu.buildFromTemplate([
     {
-      label: "opciones",
+      label: "Opciones",
       submenu: [
         {
-          label: "Salir",
+          label: "Refrescar",
           click: () => {
             //app.quit();
             MainWindow.loadFile("app/index.html")
@@ -37,7 +37,7 @@ function createWindow() {
       ]
     }
   ])
-
+  menu = null
   Menu.setApplicationMenu(menu)
 }
 
