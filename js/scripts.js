@@ -2,12 +2,10 @@
 var Tabulator = require('tabulator-tables');//Se usa para la tabla de info
 const fs = require("fs");//Para modificar el JSON
 const path = require('path');//Para obtener la ruta
-let {PythonShell} = require('python-shell')//Python shell que utilizo para correr python
+let { PythonShell } = require('python-shell')//Python shell que utilizo para correr python
 const pth = path.join(__dirname, '../Data/data.json');//La ruta donde está el JSON
-
 var changedPassword = ""; //Con esto evito volver a guardar los datos si solo quería ver la contraseña
-var datos = [];//El array donde van todos los objetos JSON
-var rawdata; //Los datos del JSON sin parsear
+var datos;//El array donde van todos los objetos JSON
 var key;
 var table;
 //Variables de los inputs
@@ -25,9 +23,6 @@ const btnGuardar = document.getElementById("Guardar");
 const btnModificar = document.getElementById("Modificar");
 const btnAcceder = document.getElementById("Acceder");
 
-//----------------------------------------------------------------------------
-//Trato de leer el archivo que contiene las contraseñas, sino existe lo creo
-
 //Se deja---------------------------------------------------------------------
 //Inicialmente solo puedo cambiar la contraseña maestra o agregar una nueva cuenta,
 //para acceder a una cuenta en especifico la selecciono en la tabla
@@ -37,110 +32,107 @@ DeshabilitarBotones(true, true, true, true, true, true, true, false);
 //------------------------------------------------------------------------------
 
 //le pasamos la carga descifrarJSON() y cifrarJSON(), ver como modificar esto sin joderlo--------------------
-function UpdateDatos(){
-  datos = JSON.stringify(datos);
-  fs.writeFileSync(pth, datos)
-  try{
-    rawdata = fs.readFileSync(pth, "");
-    datos = JSON.parse(rawdata);
-    hasPreviousPasswd=true;
-  }catch{
-    hasPreviousPasswd=false;
-    datos=[];
-  }
-  cifrarJSON(key)
-  descifrarJSON(key)
+async function UpdateDatos() {
+  await cifrarJSON(key)
+  await descifrarJSON(key)
   DeshabilitarBotones(false, false, true, true, true, true, true, true);
+  console.log("vamos a reemplazar los datos")
   table.replaceData(datos);
 }
 //----------------------------------------------------------------------------
 
-//Hacer modificaciones (generar llave, cifrar y descifrar-------------------------------------------
-async function acceder(){
+//Hacer modificaciones (que pasa si pones mal la contraseña)-------------------------------------------
+async function acceder() {
   //checo si key es nulo, si es nulo acabo de prender la aplicación
   //si no es nulo es que le piqué en cambiar masterpasswd y descifro cifro de nuevo el archivo 
-  if (key == null){
-    await hashear(masterInput.value)
-    accederPorPrimeraVez();
-  }else{
+  if (key == null) {
+    await hashear(masterInput.value)//Me espero a que términe de hacer el hash antes de seguir
+    await descifrarJSON(key)
+    try {
+      crearTabla()
+      accederPorPrimeraVez();
+      console.log("No hay llave anterior")
+      document.getElementById("Aviso").innerHTML = "";
+    } catch {
+      document.getElementById("Aviso").innerHTML = "Contraseña incorrecta";
+    }
+  } else {
     await hashear(masterInput.value);
-    DeshabilitarBotones(false, false, true, true, true, true, true, true);
-    ModificarMasterInput("","",true, "password");
-    cifrarJSON(key);
-    descifrarJSON(key)
-    
+    await descifrarJSON(key)
+    try {
+      crearTabla()
+      document.getElementById("Aviso").style.color = "greenyellow"
+      document.getElementById("Aviso").innerHTML = "Contraseña cambiada exitosamente";
+      console.log("Ya hay una llave")
+      DeshabilitarBotones(false, false, true, true, true, true, true, true);
+      ModificarMasterInput("", "", true, "password");
+      await cifrarJSON(key);
+      await descifrarJSON(key)
+      document.getElementById("Aviso").innerHTML = "";
+    } catch {
+      console.log("Volviste a poner mal")
+    }
   }
 }
-function accederPorPrimeraVez(){
-  if (masterInput.value!==""){
-    
+function crearTabla() {
+  table = new Tabulator("#tabla-datos", {
+    height: 380, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
+    data: datos, //assign data to table
+    layout: "fitColumns", //fit columns to width of table (optional)
+    selectable: 1, //make rows selectable
+    columns: [ //Define Table Columns
+      { title: "Sitio", field: "Sitio" },
+      { title: "Cuenta", field: "Cuenta" },
+
+    ],
+    rowClick: function (e, row) { //trigger an alert message when the row is clicked
+      //alert("Row " + row.getData().Contraseña + " Clicked!!!!");
+      ModificarSitioInput(row.getData().Sitio, "cuentaYaExiste", true);
+      ModificarCuentaInput(row.getData().Cuenta, "", true);
+      ModificarPasswdInput(row.getData().Contraseña, "", true, "password");
+      ModificarMasterInput("", "", true, "password");
+      DeshabilitarBotones(false, false, false, false, true, true, true, true);
+    },
+  });
+}
+async function accederPorPrimeraVez() {
+  if (masterInput.value !== "") {
     DeshabilitarBotones(false, false, true, true, true, true, true, true);
-    ModificarMasterInput("","",true, "password");
-    descifrarJSON(key)//Aquí leo el JSON y trato de descifrarlo
-
-    try{
-      rawdata = fs.readFileSync(pth, "");
-      datos = JSON.parse(rawdata);
-    }catch{
-      fs.writeFileSync(pth, "")
-    };
-
-      table = new Tabulator("#tabla-datos", {
-      height:380, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
-      data:datos, //assign data to table
-      layout:"fitColumns", //fit columns to width of table (optional)
-      selectable:1, //make rows selectable
-      columns:[ //Define Table Columns
-        {title:"Sitio", field:"Sitio"},
-        {title:"Cuenta", field:"Cuenta"},
-        
-      ],
-      rowClick:function(e, row){ //trigger an alert message when the row is clicked
-        //alert("Row " + row.getData().Contraseña + " Clicked!!!!");
-        ModificarSitioInput(row.getData().Sitio, "cuentaYaExiste", true);
-        ModificarCuentaInput(row.getData().Cuenta, "", true);
-        ModificarPasswdInput(row.getData().Contraseña, "", true, "password");
-        ModificarMasterInput("","",true, "password");
-        DeshabilitarBotones(false, false, false, false, true, true, true, true);
-      },
-    });
+    ModificarMasterInput("", "", true, "password");
   }
 }
 
 //-------------------------------------------------------------
-
-//Toca hacer modificaciones (ver que onda con el update, cifrar y descifrar---------------------------------
-function guardarDatos(){
+async function guardarDatos() {
   var update;
   let sitio, cuenta, passwd;
   sitio = sitioInput.value;
-  cuenta= cuentaInput.value;
-  passwd=passwdInput.value;
-  
-    if (cuenta!=="" && sitio!=="" && passwd!==""){
-      update = {Sitio: sitio, Cuenta: cuenta, Contraseña: passwd}
-      console.log(changedPassword, passwd);
+  cuenta = cuentaInput.value;
+  passwd = passwdInput.value;
 
-      if (sitioInput.placeholder==="cuentaYaExiste" && changedPassword!==passwd){
-        const index = datos.findIndex(x => ((x.Sitio === sitio && x.Cuenta === cuenta))); 
-        if (index !== undefined) datos.splice(index, 1);
-        datos.push(update);
-        cifrarJSON(key)
-       }else{
-        if(changedPassword!==passwd) datos.push(update);
-       }
-     
+  if (cuenta !== "" && sitio !== "" && passwd !== "") {
+    update = { Sitio: sitio, Cuenta: cuenta, Contraseña: passwd }
+
+    if (sitioInput.placeholder === "cuentaYaExiste" && changedPassword !== passwd) {
+      const index = datos.findIndex(x => ((x.Sitio === sitio && x.Cuenta === cuenta)));
+      if (index !== undefined) datos.splice(index, 1);
+      datos.push(update);
+      await cifrarJSON(key)
+    } else {
+      if (changedPassword !== passwd) datos.push(update);
     }
-    table.replaceData(datos);
-  
+
+  }
+  table.replaceData(datos);
+
   activarMenu("Guardar");
   UpdateDatos();
-  changedPassword="";
+  changedPassword = "";
 }
 //------------------------------------------------------------------
 
-//Modificar------------------------------------------------
-function hashear(contraseñaMaestra){
+//------------------------------------------------
+function hashear(contraseñaMaestra) {
   //le paso a python eso
   //Opciones para utilizar el python-shell
   let options = {
@@ -149,52 +141,51 @@ function hashear(contraseñaMaestra){
     pythonOptions: ['-u'], // get print results in real-time
     scriptPath: path.join(__dirname, '../py'),//'path/to/my/scripts',
     args: [contraseñaMaestra]
-    };
-    return new Promise((resolve,reject) =>{
-      try{
-        PythonShell.run('generateKey.py', options, function (err, results) {
-          if (err) throw err;
-          // results is an array consisting of messages collected during execution
-          key=results[0];
-          resolve();  
-        });   
-      }
-      catch{
-        console.log('error running python code')
-        reject();
-      }
-    }) 
+  };
+  return new Promise((resolve, reject) => {
+    try {
+      PythonShell.run('generateKey.py', options, function (err, results) {
+        if (err) throw err;
+        // results is an array consisting of messages collected during execution
+        key = results[0];
+        resolve();
+      });
+    }
+    catch {
+      console.log('error running python code')
+      reject();
+    }
+  })
 }
 //-------------------------------------------------------
 
 //Esto ya esta--------------------------------------------
-function generarContraseña(){
+function generarContraseña() {
   //Opciones para utilizar el python-shell
   let options = {
-  mode: 'text',
-  pythonPath: path.join(__dirname, '../py/env/Scripts/python.exe'),//'path/to/python',
-  pythonOptions: ['-u'], // get print results in real-time
-  scriptPath: path.join(__dirname, '../py'),//'path/to/my/scripts',
-  //args: ['value1', 'value2', 'value3']
+    mode: 'text',
+    pythonPath: path.join(__dirname, '../py/env/Scripts/python.exe'),//'path/to/python',
+    pythonOptions: ['-u'], // get print results in real-time
+    scriptPath: path.join(__dirname, '../py'),//'path/to/my/scripts',
+    //args: ['value1', 'value2', 'value3']
   };
   //Genero una contraseña y la coloco (python)
-  console.log("Genero una nueva contraseña")
   ModificarPasswdInput("", "", false, "text");
 
   PythonShell.run('GenerarPasswd.py', options, function (err, results) {
     if (err) throw err;
     // results is an array consisting of messages collected during execution
-    passwdInput.value=results;
+    passwdInput.value = results;
   });
 }
 //-------------------------------------------------------------------------
 
 //Esto ya está-----------------------------------------------------
-function descrifrarContraseña(){
+function descrifrarContraseña() {
   //Leo la contraseña y la descifro (python)
-  let passwd=passwdInput.value;
+  let passwd = passwdInput.value;
   changedPassword = passwd;
-  if (key!==""){
+  if (key !== "") {
     //passwd = descifrar(passwd, key);//Aqui llamo a python para descifrar
     ModificarPasswdInput(passwd, "", true, "text");
     DeshabilitarBotones(true, false, true, true, true, true, false, true);
@@ -203,50 +194,102 @@ function descrifrarContraseña(){
 //--------------------------------------------------------------------
 
 //Esto ya está-----------------------------------------------------------
-function eliminarCuenta(){
+function eliminarCuenta() {
   //Uso js para eliminar del json
   let sitio;
   sitio = sitioInput.value;
-  
-  const index = datos.findIndex(x => x.Sitio === sitio); //Encuentro el index del elemento que sea del mismo sitio
+
+  const index = datos.findIndex(x => x.Sitio === sitio);
+  console.log(datos) //Encuentro el index del elemento que sea del mismo sitio
   if (index !== undefined) datos.splice(index, 1);
-  console.log("After removal:", datos);
+  //console.log("After removal:", datos);
   activarMenu("EliminarCuenta");
   UpdateDatos();
 }
 
 
-function agregarCuenta(){
+function agregarCuenta() {
   //Modifico inputs
   activarMenu("AgregarCuenta");
 
 }
 
-function modificar(){
+function modificar() {
   ModificarPasswdInput(passwdInput.value, "", false, "text");
   DeshabilitarBotones(true, true, true, true, false, false, true, true);
 }
 //-------------------------------------------------------------------------
 
-function cifrarJSON(param){
+function cifrarJSON(param) {
   //Python
   //Checar como pasarle datos (la variable a python)
   //Le paso datos (la variable) y se encarga de cifrar y sobreescribir el archivo, ya asumimos que existe 
-  console.log("Le paso la variable datos a python y que cifre el archivo")
+
+  let options = {
+    mode: 'text',
+    pythonPath: path.join(__dirname, '../py/env/Scripts/python.exe'),//'path/to/python',
+    pythonOptions: ['-u'], // get print results in real-time
+    scriptPath: path.join(__dirname, '../py'),//'path/to/my/scripts',
+    args: [key, JSON.stringify(datos)]
+  };
+
+  return new Promise((resolve, reject) => {
+
+    try {
+      PythonShell.run('cifrarJson.py', options, function (err, results) {
+        if (err) throw err;
+        console.log(results)
+        // results is an array consisting of messages collected during execution
+        resolve();
+      });
+    }
+    catch {
+      console.log('error running python code')
+      reject();
+    }
+  })
+
 }
 
-function descifrarJSON(param){
+function descifrarJSON(param) {
   //Python
   //Este lo llamo cuando la llave y se encarga de leer el archivo si existe o crearlo si no existe
   //me regresa el arreglo de dicciones (objetos json) si no ya tengo datos (arreglo vacio) y puedo hacer lo que sea
   //checar como recibo datos arreglos de python
-  console.log("python lee el archivo y me lo regresa")
+  let options = {
+    mode: 'text',
+    pythonPath: path.join(__dirname, '../py/env/Scripts/python.exe'),//'path/to/python',
+    pythonOptions: ['-u'], // get print results in real-time
+    scriptPath: path.join(__dirname, '../py'),//'path/to/my/scripts',
+    args: [key]
+  };
+
+  return new Promise((resolve, reject) => {
+    try {
+      PythonShell.run('descifrarJson.py', options, function (err, results) {
+        if (err) throw err;
+        // results is an array consisting of messages collected during execution
+        try {//Si esto truena es que no pudo descifrar
+          datos = JSON.parse(results);
+          resolve();
+        } catch {
+          resolve();
+        }
+      });
+    }
+    catch {
+      console.log('error running python code')
+      reject();
+    }
+  })
 }
 
-function cambiarPasswdMaestra(){
+
+function cambiarPasswdMaestra() {
   //pido la nueva nueva llave, solo es cambiar la variable key y volver a llamar cifrarJSON() y descifrarJSON()
   DeshabilitarBotones(true, true, true, true, true, true, true, false);
-  ModificarMasterInput("","",false, "password");
+  bloquearInputs();
+  ModificarMasterInput("", "Nueva Contraseña Maestra", false, "password");
 }
 
 //--------------------------------------------------
@@ -254,16 +297,16 @@ function cambiarPasswdMaestra(){
 //Esto ya esta--------------------------------------------------------------------------------------------------
 //Esta función bloquea los inputs, se llama después de cada cambio, 
 //es una manera de "regresar" al menu principal
-function bloquearInputs(){
+function bloquearInputs() {
   ModificarSitioInput("", "", true);
   ModificarCuentaInput("", "", true);
   ModificarPasswdInput("", "", true, "text");
-  ModificarMasterInput("","",true, "text");
+  ModificarMasterInput("", "", true, "text");
 }
 
 //Esta función desbloquea inputs y coloca placeholders de acuerdo a lo que vas a hacer
-function activarMenu(opcion){
-  switch (String(opcion)){
+function activarMenu(opcion) {
+  switch (String(opcion)) {
     case "AgregarCuenta":
       ModificarSitioInput("", "Nuevo Sitio", false);
       ModificarCuentaInput("", "Nueva Cuenta", false);
@@ -278,14 +321,11 @@ function activarMenu(opcion){
       DeshabilitarBotones(true, true, true, true, false, false, true, true);
       break;
 
-    case "DescrifarContraseña":
-      break;
     case "EliminarCuenta":
       bloquearInputs();
       DeshabilitarBotones(false, false, true, true, true, true, true, true);
       break;
-    case "GenerarContraseña":
-      break;
+
     case "Guardar":
       bloquearInputs();
       DeshabilitarBotones(false, false, true, true, true, true, true, true);
@@ -299,41 +339,41 @@ function activarMenu(opcion){
 //valor (string): Que ya van a tener escrito
 //placeholder (string): La "guía" que van a mostrar
 //readOnly (Boolean): Si se pueden modificar o no.
-function ModificarSitioInput(valor, placeholder, readOnly){
-  sitioInput.value=valor;
-  sitioInput.placeholder=placeholder;
+function ModificarSitioInput(valor, placeholder, readOnly) {
+  sitioInput.value = valor;
+  sitioInput.placeholder = placeholder;
   sitioInput.readOnly = readOnly;
 }
-function ModificarCuentaInput(valor, placeholder, readOnly){
-  cuentaInput.value=valor;
-  cuentaInput.placeholder=placeholder;
+function ModificarCuentaInput(valor, placeholder, readOnly) {
+  cuentaInput.value = valor;
+  cuentaInput.placeholder = placeholder;
   cuentaInput.readOnly = readOnly;
 }
-function ModificarPasswdInput(valor, placeholder, readOnly, type){
-  passwdInput.value=valor;
-  passwdInput.placeholder=placeholder;
+function ModificarPasswdInput(valor, placeholder, readOnly, type) {
+  passwdInput.value = valor;
+  passwdInput.placeholder = placeholder;
   passwdInput.readOnly = readOnly;
   passwdInput.type = type;
 }
 
-function ModificarMasterInput(valor, placeholder, readOnly, type){
-  masterInput.value=valor;
-  masterInput.placeholder=placeholder;
+function ModificarMasterInput(valor, placeholder, readOnly, type) {
+  masterInput.value = valor;
+  masterInput.placeholder = placeholder;
   masterInput.readOnly = readOnly;
   masterInput.type = type;
 }
 
 //Esta funcion activa y desactiva según lo que yo le diga
 //Todos sus parametros son booleans
-function DeshabilitarBotones(agregar, cambiar, descifrar, eliminar, generar, guardar, modificar, acceder){
-  btnAgregar.disabled=agregar;
-  btnCambiar.disabled=cambiar;
-  btnDescifrar.disabled=descifrar;
-  btnEliminar.disabled=eliminar;
-  btnGenerar.disabled=generar
-  btnGuardar.disabled=guardar;
-  btnModificar.disabled=modificar;
-  btnAcceder.disabled=acceder;
+function DeshabilitarBotones(agregar, cambiar, descifrar, eliminar, generar, guardar, modificar, acceder) {
+  btnAgregar.disabled = agregar;
+  btnCambiar.disabled = cambiar;
+  btnDescifrar.disabled = descifrar;
+  btnEliminar.disabled = eliminar;
+  btnGenerar.disabled = generar
+  btnGuardar.disabled = guardar;
+  btnModificar.disabled = modificar;
+  btnAcceder.disabled = acceder;
 }
 
 //------------------------------------------------------------
