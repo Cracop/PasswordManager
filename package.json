@@ -1,7 +1,7 @@
 {
   "name": "gestor-app",
   "version": "1.0.0",
-  "description": "",
+  "description": "Un administrador de contraseñas para mantener seguras tus cuentas",
   "main": "main.js",
   "scripts": {
     "start": "electron-forge start",
@@ -9,7 +9,7 @@
     "make": "electron-forge make"
   },
   "keywords": [],
-  "author": "",
+  "author": "Rodrigo Alejandro Barrera Manjarrez y Alexis Sanchez Orosco",
   "license": "ISC",
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.54",
