@@ -34,7 +34,7 @@ def encryptionJSON(key, lista):
     try:
         os.remove("db.json")#quito el desencriptado
     except:
-        
+        print("Eror")
 
 key = sys.argv[1] #tomo el hash
 lst = json.loads(sys.argv[2]) #Paso de string a json
