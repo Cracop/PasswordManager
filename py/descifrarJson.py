@@ -23,7 +23,7 @@ def decryptionJSON(key):
             jsonStr=json.dumps(lst)#convierte la lista a json
             return jsonStr #regreso el objeto json
         except InvalidToken: #llave incorrecta
-            print("Invalid Key - Unsuccessfully decrypted")
+            print("Invalid Key - Unsuccessfully decrypted")#JS va a tronar al intentar parsear esto i.e contraseña incorrecta
     except FileNotFoundError: #No existe el archivo
         jsonStr=[]
         return jsonStr

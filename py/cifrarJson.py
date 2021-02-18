@@ -17,8 +17,8 @@ def encryptionJSON(key, lista):
     output_file = 'db.encrypted'
     input_file = "db.json"
     
-    if len(lista)==0:
-        os.remove("db.encrypted")
+    if len(lista)==0:#Si la lista que me pasan está vacía significa que no hay ningún dato
+        os.remove("db.encrypted")#Borro el archivo entonces
         output_file = 'db.json'
         with open(output_file, 'wb') as f:#Lo creo vacio
             pass
@@ -34,11 +34,10 @@ def encryptionJSON(key, lista):
     try:
         os.remove("db.json")#quito el desencriptado
     except:
-        print("HEHE")
+        
 
-key = sys.argv[1]
-lst = json.loads(sys.argv[2])
-#lst = sys.argv[2]
+key = sys.argv[1] #tomo el hash
+lst = json.loads(sys.argv[2]) #Paso de string a json
 
 encryptionJSON(key, lst)
 sys.stdout.flush()
