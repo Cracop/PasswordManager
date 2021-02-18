@@ -9,7 +9,7 @@
     "make": "electron-forge make"
   },
   "keywords": [],
-  "author": "Rodrigo Alejandro Barrera Manjarrez y Alexis Sanchez Orosco",
+  "author": "Rodrigo Alejandro Barrera Manjarrez y Alexis Sanchez Orozco",
   "license": "ISC",
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.54",
